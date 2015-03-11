@@ -40,6 +40,15 @@
 #define GRID_MARGIN 3
 #define KERNEL_SIZE ((KERNEL_WIDTH*2+1)*(KERNEL_WIDTH*2+1))
   
+/** mrasyid: @Data structure to record the LK optical flow point data (for debugging or evaluation)
+*/
+struct LKData
+{
+  float dx;
+  float dy;
+  float s;
+}
+
 /** @brief This class contains the "short term tracking" part of the algorithm.
  */
 class LKTracker
@@ -59,7 +68,7 @@ public:
    *  @param isDefined Must have the same size as @b bbox. True for each object that is 
    *    currently defined and should be tracked. Is set to false if tracking failed.
    */
-  void processFrame(const Matrix& curImage, std::vector<ObjectBox>& bbox, std::vector<bool>& isDefined); 
+  void processFrame(const Matrix& curImage, std::vector<ObjectBox>& bbox, std::vector<bool>& isDefined, LKData& ivLKData); 
   /// An adapter for the single object case
   bool processFrame(const Matrix& curImage, ObjectBox& bbox, bool dotracking = true); 
   /// A list of points [x0,y0,...,xn,yn] that where considered as inliers in the last iteration
@@ -139,6 +148,7 @@ bool LKTracker::processFrame(const Matrix& curImage, ObjectBox& bbox, bool dotra
 {
   std::vector<ObjectBox> boxes;
   std::vector<bool> isDefined;
+  LKData ivLKData;
   boxes.push_back(bbox);
   isDefined.push_back(dotracking);
   processFrame(curImage, boxes, isDefined);
@@ -146,7 +156,7 @@ bool LKTracker::processFrame(const Matrix& curImage, ObjectBox& bbox, bool dotra
   return isDefined[0];
 }
 
-void LKTracker::processFrame(const Matrix& curImage, std::vector<ObjectBox>& bbox, std::vector<bool>& isDefined)
+void LKTracker::processFrame(const Matrix& curImage, std::vector<ObjectBox>& bbox, std::vector<bool>& isDefined, LKData& ivLKData)
 {
   int nobs = bbox.size();
   if (nobs > 0 && !ivPrevPyramid)
@@ -397,6 +407,12 @@ void LKTracker::processFrame(const Matrix& curImage, std::vector<ObjectBox>& bbo
           //s = std::min(1.1, s);
         }
       }
+      
+      //Add LK optical flow data information
+      ivLKData.x=dx;
+      ivLKData.y=dy;
+      ivLKData.s=s;
+      
       //delete[] points0; delete[] points1; delete[] points2;
       //delete[] status; delete[] fb; delete[] ncc;
 
